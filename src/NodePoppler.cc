@@ -218,7 +218,7 @@ QBuffer *writePdfFields(struct WriteFieldsParams params) {
         }
       }
     }
-    delete[] formFields;
+    delete formFields;
     delete page;
   }
 
