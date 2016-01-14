@@ -1,4 +1,65 @@
-converter = document->pdfConverter();
+#include <nan.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <map>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <poppler/qt4/poppler-form.h>
+#include <poppler/qt4/poppler-qt4.h>
+
+#include <cairo/cairo.h>
+#include <cairo/cairo-pdf.h>
+
+#include <QtCore/QBuffer>
+#include <QtCore/QFile>
+#include <QtGui/QImage>
+
+#include "NodePoppler.h"    // NOLINT(build/include)
+
+using namespace std;
+using v8::Number;
+using v8::String;
+using v8::Object;
+using v8::Local;
+using v8::Array;
+using v8::Value;
+using v8::Boolean;
+
+inline bool fileExists (const std::string& name) {
+  if (FILE *file = fopen(name.c_str(), "r")) {
+    fclose(file);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// Cairo write and read functions (to QBuffer)
+static cairo_status_t readPngFromBuffer(void *closure, unsigned char *data, unsigned int length) {
+  QBuffer *myBuffer = (QBuffer *)closure;
+  size_t bytes_read;
+  bytes_read = myBuffer->read((char *)data, length);
+  if (bytes_read != length)
+    return CAIRO_STATUS_READ_ERROR;
+
+  return CAIRO_STATUS_SUCCESS;
+}
+static cairo_status_t writePngToBuffer(void *closure, const unsigned char *data, unsigned int length) {
+  QBuffer *myBuffer = (QBuffer *)closure;
+  size_t bytes_wrote;
+  bytes_wrote = myBuffer->write((char *)data, length);
+  if (bytes_wrote != length)
+    return CAIRO_STATUS_READ_ERROR;
+
+  return CAIRO_STATUS_SUCCESS;
+}
+
+void createPdf(QBuffer *buffer, Poppler::Document *document) {
+  ostringstream ss;
+
+  Poppler::PDFConverter *converter = document->pdfConverter();
   converter->setPDFOptions(converter->pdfOptions() | Poppler::PDFConverter::WithChanges);
   converter->setOutputDevice(buffer);
   if (!converter->convert()) {
@@ -9,11 +70,9 @@ converter = document->pdfConverter();
     //     OpenOutputError,
     //     NotSupportedInputFileError
     // };
-    delete converter;
     ss << "Error occurred when converting PDF: " << converter->lastError();
     throw ss.str();
   }
-  delete converter;
 }
 
 void createImgPdf(QBuffer *buffer, Poppler::Document *document) {
@@ -170,7 +229,6 @@ QBuffer *writePdfFields(struct WriteFieldsParams params) {
     createPdf(bufferDevice, document);
   }
 
-  delete document;
   return bufferDevice;
 }
 
@@ -283,9 +341,7 @@ NAN_METHOD(ReadSync) {
         fieldNum++;
 
       }
-      delete field;
     }
-    delete page;
   }
 
   NanReturnValue(fieldArray);
