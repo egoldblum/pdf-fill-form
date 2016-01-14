@@ -70,9 +70,11 @@ void createPdf(QBuffer *buffer, Poppler::Document *document) {
     //     OpenOutputError,
     //     NotSupportedInputFileError
     // };
+    delete converter;
     ss << "Error occurred when converting PDF: " << converter->lastError();
     throw ss.str();
   }
+  delete converter;
 }
 
 void createImgPdf(QBuffer *buffer, Poppler::Document *document) {
@@ -214,7 +216,9 @@ QBuffer *writePdfFields(struct WriteFieldsParams params) {
           }
         }
       }
+      delete field;
     }
+    delete page;
   }
 
   // Now save and return the document
@@ -229,6 +233,7 @@ QBuffer *writePdfFields(struct WriteFieldsParams params) {
     createPdf(bufferDevice, document);
   }
 
+  delete document;
   return bufferDevice;
 }
 
