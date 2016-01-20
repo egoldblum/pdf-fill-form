@@ -108,6 +108,8 @@ void createImgPdf(QBuffer *buffer, Poppler::Document *document) {
     }
 
     pageImage->close();
+    delete pageImage;
+    delete page;
   }
 
   // Close Cairo
@@ -367,7 +369,6 @@ NAN_METHOD(WriteSync) {
     buffer->close();
     delete buffer;
     NanReturnValue(returnPdf);
-    delete returnPdf;
   }
   catch (string error)
   {
