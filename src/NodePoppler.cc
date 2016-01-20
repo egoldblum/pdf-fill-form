@@ -169,8 +169,7 @@ QBuffer *writePdfFields(struct WriteFieldsParams params) {
   for (int i = 0; i < n; i += 1) {
     Poppler::Page *page = document->page(i);
 
-    QList<Poppler::FormField*> formFields = page->formFields();
-    foreach (Poppler::FormField *field, formFields) {
+    foreach (Poppler::FormField *field, page->formFields()) {
       string fieldName = field->fullyQualifiedName().toStdString();
       // Support writing fields by both fieldName and id.
       // If fieldName is not present in params, try id.
@@ -217,8 +216,8 @@ QBuffer *writePdfFields(struct WriteFieldsParams params) {
           }
         }
       }
+      delete field;
     }
-    delete formFields;
     delete page;
   }
 
@@ -368,6 +367,7 @@ NAN_METHOD(WriteSync) {
     buffer->close();
     delete buffer;
     NanReturnValue(returnPdf);
+    delete returnPdf;
   }
   catch (string error)
   {
